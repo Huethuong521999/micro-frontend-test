@@ -1,63 +1,41 @@
 const { ModuleFederationPlugin } = require('webpack').container;
-const deps = require('./package.json').dependencies;
+const fs = require('fs');
+const path = require('path');
 
-module.exports = {
-    entry: './src/index',
-    mode: 'development',
-    devServer: {
-      port: 3002,
-      headers: {
-        "Access-Control-Allow-Origin": "*"
-      },
-      hot: true
-    },
-    resolve: {
-      extensions: ['.js', '.tsx', '.ts'],
-    },
-    output: {
-      publicPath: 'auto',
-    },
-    module: {
-      rules: [
-        {
-          test: /\.(js|ts)x?$/,
-          loader: 'babel-loader',
-          exclude: /node_modules/,
-          options: {
-            presets: ['@babel/preset-react', '@babel/preset-typescript'],
-          },
-        },
-        {
-          test: /\.png$/,
-          use: {
-            loader: 'url-loader',
-            options: { limit: 8192 },
-          },
-        },
-        {
-          test: /\.css$/i,
-          use: ['style-loader',
-                'css-loader'],
-        },
-      ],
-    },
-    plugins: [
-      new ModuleFederationPlugin({
-        name: 'react_app',
-        filename: 'remoteEntry.js',
-        exposes: {
-          'AdminApp': './src/loader.ts',
-        },
-       shared: {
-          react: {
-            singleton: true,
-            requiredVersion: deps.react,
-          },
-          'react-dom': {
-            singleton: true,
-            requiredVersion: deps['react-dom'],
-          },
-        },
-      }),
-    ],
-  };
+const webpackConfigPath = 'react-scripts/config/webpack.config';
+const webpackConfig = require(webpackConfigPath);
+
+/**
+ * @returns {string}
+ */
+function getPublicPath() {
+  let publicPath = 'auto';
+  const providedPath = process.env.PUBLIC_URL;
+
+  if (
+    providedPath &&
+    providedPath.length >= 0 &&
+    providedPath.startsWith('http')
+  ) {
+    publicPath = providedPath.endsWith('/') ? providedPath : providedPath + '/';
+  }
+  return publicPath;
+}
+
+const override = (config) => {
+  const projectDir = path.resolve(fs.realpathSync(process.cwd()));
+  const mfConfigPath = path.resolve(projectDir, 'moduleFederation.config.js');
+
+  if (fs.existsSync(mfConfigPath)) {
+    const mfConfig = require(mfConfigPath);
+    config.plugins.push(new ModuleFederationPlugin(mfConfig));
+    config.output.publicPath = getPublicPath();
+  }
+
+  return config;
+};
+
+require.cache[require.resolve(webpackConfigPath)].exports = (env) =>
+  override(webpackConfig(env));
+
+module.exports = require(webpackConfigPath);

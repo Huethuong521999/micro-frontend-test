@@ -1,8 +1,9 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { Suspense } from "react";
 import { Route, Routes } from 'react-router-dom';
-import Login from './login/Login';
+import './App.css';
 import { HomePage } from './login/HomePage';
+import Login from './login/Login';
+const AdminApp = React.lazy(() => import('admin/App'));
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
       <Routes>
         <Route path="/*" element={<Login />} />
         <Route path="/homepage" element={<HomePage />} />
+        <Route path="/reception-list" element={<Suspense fallback="Loading App1..."><AdminApp /></Suspense>} />
       </Routes>
     </div>
   );

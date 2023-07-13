@@ -1,11 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import './homepage.css';
-import { users, remoteModules} from '../utils/constant';
 
 export function HomePage() {
   const navigate = useNavigate()
-  const handleButtonClick= (to) => {
-    navigate('/login')
+  const handleButtonClick = (to) => {
+    navigate(to)
   };
 
   return (
